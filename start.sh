@@ -2,6 +2,7 @@
 
 # MediaCrawler Startup Script
 # This script handles dependency sync and starts the API server.
+# test
 
 echo "========================================"
 echo "   🔥 MediaCrawler Startup Script 🔥   "
