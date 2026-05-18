@@ -15,8 +15,12 @@
 # 5. 不得用于任何非法或不当的用途。
 #
 # 详细许可条款请参阅项目根目录下的LICENSE文件。
-# 使用本代码即表示您同意遵守上述原则和LICENSE中的所有条款。
+<<<<<<< HEAD
+# 使用本代码即表示您同意遵守上述原则和LICENSE中的所有条款。    
+
+=======
 # test
+>>>>>>> a49bf591bf2cc699fb6ce5f51b97079d7abe5386
 
 from asyncio.tasks import Task
 from contextvars import ContextVar
