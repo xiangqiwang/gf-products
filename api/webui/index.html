@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediaCrawler Data Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <h1>MediaCrawler</h1>
+            </div>
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active" data-target="collection">
+                    <span class="icon">🕷️</span> 采集中心
+                </a>
+                <a href="#" class="nav-item" data-target="query">
+                    <span class="icon">📊</span> 数据查询
+                </a>
+                <a href="#" class="nav-item" data-target="history">
+                    <span class="icon">📜</span> 采集历史
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Collection View -->
+            <section id="collection" class="view-section active">
+                <header class="section-header">
+                    <h2>启动采集任务</h2>
+                    <p>选择平台及参数，实时收集多平台自媒体数据。</p>
+                </header>
+                
+                <div class="card form-card">
+                    <form id="crawler-form">
+                        <div class="form-group">
+                            <label>目标平台</label>
+                            <div class="platform-tiled-container" id="platform-selector">
+                                <div class="platform-tile active" data-value="xhs">📕 小红书</div>
+                                <div class="platform-tile" data-value="wb">👁️ 微博</div>
+                                <div class="platform-tile" data-value="dy">🎵 抖音</div>
+                                <div class="platform-tile" data-value="bili">📺 B站</div>
+                                <div class="platform-tile" data-value="ks">🎬 快手</div>
+                                <div class="platform-tile" data-value="zhihu">💡 知乎</div>
+                            </div>
+                            <input type="hidden" id="platform" name="platform" value="xhs">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="crawler_type">采集模式</label>
+                            <select id="crawler_type" name="crawler_type" required>
+                                <option value="search">关键词搜索 (Search)</option>
+                                <option value="detail">指定帖子 (Detail)</option>
+                                <option value="creator">创作者主页 (Creator)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="login_type">登录方式</label>
+                            <select id="login_type" name="login_type" required>
+                                <option value="qrcode">扫码登录 (QR Code)</option>
+                                <option value="cookie">Cookie登录</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="keyword">搜索关键词 (或帖子ID)</label>
+                            <input type="text" id="keyword" name="keyword" placeholder="输入采集关键词，支持用英文逗号(,)分隔多个词..." required>
+                        </div>
+
+                        <div class="inline-form">
+                            <div class="form-group">
+                                <label for="max_notes_count">最大采集数量</label>
+                                <input type="number" id="max_notes_count" name="max_notes_count" placeholder="默认20" value="20" min="1">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="start_date">发布时间范围 (起始)</label>
+                                <input type="date" id="start_date" name="start_date">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="end_date">发布时间范围 (结束)</label>
+                                <input type="date" id="end_date" name="end_date">
+                            </div>
+                        </div>
+
+                        <!-- Global Advanced Settings -->
+                        <div id="advanced-settings" class="advanced-settings">
+                            <div class="form-group">
+                                <label for="search_sort_type">搜索排序方式</label>
+                                <select id="search_sort_type" name="search_sort_type">
+                                    <option value="latest" selected>最新 (实时优先)</option>
+                                    <option value="general">综合 (相关度优先)</option>
+                                    <option value="popular">热门 (点赞最高)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary" id="btn-start">开始采集</button>
+                            <button type="button" class="btn btn-danger" id="btn-stop" disabled>停止任务</button>
+                        </div>
+                    </form>
+                <div class="card summary-card" id="task-summary" style="display: none; border-left: 4px solid var(--accent-color); background: linear-gradient(to right, #ffffff, #f9f9ff);">
+                    <div class="summary-header">
+                        <h3>📊 采集战报</h3>
+                        <span class="status-badge status-success">任务完成</span>
+                    </div>
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <label>开始时间</label>
+                            <span id="summary-start">-</span>
+                        </div>
+                        <div class="summary-item">
+                            <label>结束时间</label>
+                            <span id="summary-end">-</span>
+                        </div>
+                        <div class="summary-item highlight">
+                            <label>成果爬取数量</label>
+                            <span class="count-badge" id="summary-count">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="status-indicator">
+                    <span>当前状态: </span>
+                    <span id="crawler-status" class="status-idle">空闲</span>
+                </div>
+            </section>
+
+            <!-- Query View -->
+            <section id="query" class="view-section">
+                <header class="section-header">
+                    <div class="header-main">
+                        <h2>数据库查询</h2>
+                        <p>检索本地 SQLite 数据库中已采集的内容数据。</p>
+                    </div>
+                    <button type="button" class="btn btn-danger-outline" id="btn-clear-db">🗑️ 清除数据库</button>
+                </header>
+
+                <div class="card filter-card">
+                    <form id="query-form" class="inline-form">
+                        <div class="form-group" style="flex: 2; min-width: 500px;">
+                            <label>数据平台 (可多选)</label>
+                            <div class="platform-tiled-container" id="q-platform-selector">
+                                <div class="platform-tile active" data-value="all">🌟 全部</div>
+                                <div class="platform-tile" data-value="xhs">📕 小红书</div>
+                                <div class="platform-tile" data-value="wb">👁️ 微博</div>
+                                <div class="platform-tile" data-value="dy">🎵 抖音</div>
+                                <div class="platform-tile" data-value="bili">📺 B站</div>
+                                <div class="platform-tile" data-value="ks">🎬 快手</div>
+                                <div class="platform-tile" data-value="zhihu">💡 知乎</div>
+                            </div>
+                            <input type="hidden" id="q_platform" name="platform" value="all">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="q_keyword">内容关键词</label>
+                            <input type="text" id="q_keyword" name="keyword" placeholder="可选...">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="q_start">开始时间</label>
+                            <input type="datetime-local" id="q_start" name="start_time">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="q_end">结束时间</label>
+                            <input type="datetime-local" id="q_end" name="end_time">
+                        </div>
+
+                        <div class="form-actions align-bottom">
+                            <button type="submit" class="btn btn-primary">查询数据</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card data-card">
+                    <div class="table-responsive">
+                        <table class="data-table" id="data-table">
+                            <thead>
+                                <tr id="table-head-row">
+                                    <th>标题</th>
+                                    <th>发布时间</th>
+                                    <th>点赞</th>
+                                    <th>链接</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-body">
+                                <!-- Data rows -->
+                                <tr>
+                                    <td colspan="4" class="text-center">暂无数据，请尝试查询</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="pagination-footer">
+                        <div class="pagination-info" id="pagination-info">
+                            显示 0 条结果
+                        </div>
+                        <div class="pagination-controls">
+                            <button id="prev-page" class="btn btn-secondary btn-sm" disabled>上一页</button>
+                            <span id="current-page-display">第 1 页</span>
+                            <button id="next-page" class="btn btn-secondary btn-sm" disabled>下一页</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- History View -->
+            <section id="history" class="view-section">
+                <header class="section-header">
+                    <h2>采集历史记录</h2>
+                    <p>查看过去执行的采集任务及其状态。</p>
+                </header>
+
+                <div class="card history-card">
+                    <div class="table-responsive">
+                        <table class="data-table" id="history-table">
+                            <thead>
+                                <tr>
+                                    <th>平台</th>
+                                    <th>模式</th>
+                                    <th>参数</th>
+                                    <th>开始时间</th>
+                                    <th>状态</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-body">
+                                <tr>
+                                    <td colspan="6" class="text-center">加载中...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Task Detail Modal -->
+    <div id="modal-task-detail" class="modal">
+        <div class="modal-content task-detail-modal">
+            <div class="modal-header">
+                <h3>任务详情</h3>
+                <span class="close-modal" id="close-detail">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="task-summary-mini">
+                    <div class="summary-grid-mini">
+                        <div class="summary-item-mini">
+                            <label>平台</label>
+                            <span id="detail-platform">-</span>
+                        </div>
+                        <div class="summary-item-mini">
+                            <label>关键词</label>
+                            <span id="detail-keyword">-</span>
+                        </div>
+                        <div class="summary-item-mini">
+                            <label>采集总数</label>
+                            <span class="count-badge-mini" id="detail-count">0</span>
+                        </div>
+                        <div class="summary-item-mini">
+                            <label>起止时间</label>
+                            <span id="detail-time">-</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="results-table-container">
+                    <table class="data-table mini-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">序号</th>
+                                <th>内容摘要</th>
+                                <th>博主</th>
+                                <th style="width: 60px;">性别</th>
+                                <th style="width: 90px;">粉丝数</th>
+                                <th style="width: 100px;">IP属地</th>
+                                <th style="width: 110px;">互动数据</th>
+                                <th style="width: 80px;">链接</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detail-results-body">
+                            <!-- Results will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/app.js?v=20260516"></script>
+    <script>
+        // Use a robust observer to force and LOCK the one-year range
+        (function() {
+            const now = new Date();
+            const lastYear = new Date();
+            lastYear.setFullYear(now.getFullYear() - 1);
+            
+            const fmt = (d) => {
+                const p = (n) => n.toString().padStart(2, '0');
+                const year = d.getFullYear();
+                const month = p(d.getMonth() + 1);
+                const day = p(d.getDate());
+                const hour = p(d.getHours());
+                const min = p(d.getMinutes());
+                return `${year}-${month}-${day}T${hour}:${min}`;
+            };
+            
+            const startStr = fmt(lastYear);
+            const endStr = fmt(now);
+            const targets = ['start_date', 'end_date', 'q_start', 'q_end'];
+
+            function apply() {
+                targets.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el && !el.dataset.manuallyChanged) {
+                        const targetVal = id.includes('start') ? startStr : endStr;
+                        if (el.value !== targetVal) {
+                            el.value = targetVal;
+                            console.log('Enforced 1-year range for: ' + id);
+                        }
+                    }
+                });
+            }
+
+            // Apply immediately and repeatedly for the first 3 seconds
+            apply();
+            const interval = setInterval(apply, 500);
+            setTimeout(() => clearInterval(interval), 5000);
+
+            // Also listen for changes to prevent overwrite
+            document.addEventListener('input', (e) => {
+                if (targets.includes(e.target.id)) {
+                    e.target.dataset.manuallyChanged = 'true';
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
